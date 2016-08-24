@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+
+import optparse
+import os
+import pymediainfo
+import sys
+
+# First check args. If we have 1 arg, it should not be a filename, but it should be a file extension
+extension = "mp3"
+file_list = []
+file_header = "#EXTM3U"
+line_header = "#EXTINF:"
+std_out = True
+
+parser = optparse.OptionParser(usage="usage: %prog [options] file1 file2 file3 ...\n\
+        The program will search the cwd for files with the given extension\n\
+        (mp3 by default) or take the list of files from the arguments and\n\
+        build a m3u out of them.")
+
+parser.add_option('-o', '--output-file', dest='outfile', help="Output file to write to, otherwise prints to std out")
+parser.add_option('-e', '--file-extension', dest='extension', default="mp3", help="File extension to match, defaults to mp3")
+parser.add_option('-s', '--sort', dest='sort', action='store_false', default="False", help="Sort the list of files you use as arguments (default=False). Getting files from cwd will always sort them based on file name.")
+
+options, args = parser.parse_args(sys.argv)
+
+# print "options: "+str(options)
+# print "   args: "+str(args)
+
+extension = options.extension
+if options.outfile is not None:
+    std_out = False
+    file_name = options.outfile
+    if os.path.isfile(file_name):
+        sys.stderr.write("File "+file_name+" already exists. Exiting...\n")
+        sys.exit(-1);
+
+if len(args) > 1:
+    # Then we have a list of files to do instead of whatever is in the cwd
+    for i in range(1, len(args)):
+        if not os.path.isfile(args[i]):
+            temp = str(args[i])
+            raise TypeError(temp + " is not a file")
+        file_list.append(args[i])
+        if options.sort:
+            file_list.sort()
+else:
+    # We are doing the files in the cwd
+    temp_files = [f for f in os.listdir(os.curdir) if os.path.isfile(os.path.join(os.curdir, f))]
+    temp_files.sort()
+    for temp in temp_files:
+        if temp.endswith(extension):
+            file_list.append(temp)
+
+write_buffer = ""
+
+
+
+# if len(sys.argv) <= 2:
+#     if len(sys.argv) == 1:
+#         sys.stderr.write("Assuming file extension is .mp3\n")
+#     elif len(sys.argv) == 2:
+#         if os.path.isfile(sys.argv[1]):
+#             raise TypeError("If you're passing one argument, it should be a file extension")
+#         else:
+#             extension = sys.argv[1].lstrip(".")
+# 
+#     temp_files = [f for f in os.listdir(os.curdir) if os.path.isfile(os.path.join(os.curdir, f))]
+#     temp_files.sort()
+#     for temp in temp_files:
+#         if temp.endswith(extension):
+#             file_list.append(temp)
+# 
+# else: # more than 1 arg, so it's filenames
+#     for i in range(1, len(sys.argv)):
+#         if not os.path.isfile(sys.argv[i]):
+#             temp = str(sys.argv[i])
+#             raise TypeError(temp + " is not a file")
+#         file_list.append(sys.argv[i])
+
+#if len(file_list) < 2:
+#    raise TypeError("Need more than one file to be a playlist")
+
+#print "File list: " + str(file_list)
+
+write_buffer += file_header + "\n"
+
+for temp in file_list:
+    duration = pymediainfo.MediaInfo.parse(temp).tracks[0].duration/1000
+    artist = pymediainfo.MediaInfo.parse(temp).tracks[0].performer
+    track_name = pymediainfo.MediaInfo.parse(temp).tracks[0].track_name
+
+    write_buffer += line_header+str(duration)+","+artist+" - "+track_name+"\n"
+    write_buffer += temp+"\n"
+
+if std_out:
+    print write_buffer
+else:
+    f = open(file_name, "w")
+    f.write(write_buffer)
+    f.close()
+
