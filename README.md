@@ -32,6 +32,6 @@ Last updated: 20160824
 
 Python script by acdcfanbill
 
-This script is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
+This script is distributed in the hope that it will be useful,  
+but WITHOUT ANY WARRANTY; without even the implied warranty of   
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
